@@ -1,16 +1,16 @@
 {
-	"id": "your-module-name",
-	"name": "your-module-name",
-	"shortname": "module-shortname",
-	"description": "A short one line description of your module",
-	"version": "0.0.0",
+	"id": "samsung-tizenos",
+	"name": "Samsung TizenOS",
+	"shortname": "samsung-tizenos",
+	"description": "Control Samsung Smart TVs running TizenOS via Webservices API.",
+	"version": "0.0.1",
 	"license": "MIT",
-	"repository": "git+https://github.com/bitfocus/companion-module-your-module-name.git",
-	"bugs": "https://github.com/bitfocus/companion-module-your-module-name/issues",
+	"repository": "git+https://github.com/bitfocus/companion-module-samsung-tizenos.git",
+	"bugs": "https://github.com/bitfocus/companion-module-samsung-tizenos/issues",
 	"maintainers": [
 		{
-			"name": "Your name",
-			"email": "Your email"
+			"name": "Heinrich Warkentin",
+			"email": ""
 		}
 	],
 	"runtime": {
@@ -20,7 +20,13 @@
 		"entrypoint": "../dist/main.js"
 	},
 	"legacyIds": [],
-	"manufacturer": "Your company",
-	"products": ["Your product"],
-	"keywords": []
+	"manufacturer": "Samsung",
+	"products": ["TizenOS"],
+	"keywords": [
+		"Samsung",
+		"TizenOS",
+		"TV",
+		"Smart TV",
+		"Webservices API"
+	]
 }
