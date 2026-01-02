@@ -13,8 +13,8 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 	config!: ModuleConfig // Setup in init()
 
 	public _samsung_token?: string
-    //private _samsung_token_expiry?: number
-    public _samsung_refresh_timer?: NodeJS.Timeout
+	//private _samsung_token_expiry?: number
+	public _samsung_refresh_timer?: NodeJS.Timeout
 	public macAddress?: string
 
 	public state: {
@@ -27,7 +27,6 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 		items?: any
 		values?: any
 	} = {}
-
 
 	constructor(internal: unknown) {
 		super(internal)
@@ -48,8 +47,8 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 			ip: device.ipaddr ?? '-',
 			mac: device.mac ?? '-',
 			firmware: info.device_conf?.general?.firmware_version ?? '-',
-			panel_status: display.display_conf?.basic?.panel_status ?? '-',			
-			
+			panel_status: display.display_conf?.basic?.panel_status ?? '-',
+
 			// ===== Source / Audio =====
 			source: device.source ?? '-',
 			volume: display.display_conf?.basic?.volume ?? '-',
@@ -78,7 +77,7 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 
 	//Default API Request
 	_baseUrl(): string {
-		const scheme = this.config && (this.config.use_https === true) ? 'https' : 'http'
+		const scheme = this.config && this.config.use_https === true ? 'https' : 'http'
 		const host = (this.config && this.config.host) || ''
 		const port = this.config && this.config.port ? `:${this.config.port}` : ''
 		if (!host) return ''
@@ -91,12 +90,11 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 	}
 
 	async _defaultapirequest(
-		urlsuffix: string, 
-		body?: any, 
-		additionaloptions: any = {}, 
-		method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET'
+		urlsuffix: string,
+		body?: Record<string, unknown>,
+		additionaloptions: any = {},
+		method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET',
 	): Promise<any> {
-
 		//URL zusammenbauen
 		const base = this._baseUrl()
 		if (!base) throw new Error('Host not configured')
@@ -109,8 +107,8 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 			throwHttpErrors: false,
 			agent: this._agent(),
 			headers: {
-						'Authorization': this._samsung_token, // nur Token
-						'Accept': 'application/json'
+				Authorization: this._samsung_token, // nur Token
+				Accept: 'application/json',
 			},
 			responseType: 'json',
 
@@ -118,10 +116,10 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 		}
 
 		if (body && method !== 'GET') {
-        	options.json = body
-    	}
+			options.json = body
+		}
 
-		console.log('API Request to', url)
+		//console.log('API Request to', url)
 		//console.log('Options:', options)
 
 		try {
@@ -134,7 +132,6 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 				throw err
 			}
 			return res.body
-
 		} catch (err: any) {
 			this.log('error', `Error: ${err.message || err}`)
 			throw err
@@ -142,29 +139,26 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 	}
 	//Feedbacks and Variables
 	async fetchDeviceState(): Promise<void> {
-		const res_device= await this._defaultapirequest(
-			`/api/v1/devices`, 
-			undefined, 
-			undefined, 
-			'GET'
+		const res_device = await this._defaultapirequest(`/api/v1/devices`, undefined, undefined, 'GET')
+		this.state.device = res_device.devices?.find(
+			(d: any) => d.mac && d.mac.toLowerCase() === this.macAddress?.toLowerCase(),
 		)
-		this.state.device = res_device.devices?.find((d: any) => d.mac && d.mac.toLowerCase() === this.macAddress?.toLowerCase())
 		//console.log('Using Device:', this.state.device)
 
-		const res_info= await this._defaultapirequest(
-			`/api/v1/devices/settings/info?mac=${this.macAddress}`, 
-			undefined, 
-			undefined, 
-			'GET'
+		const res_info = await this._defaultapirequest(
+			`/api/v1/devices/settings/info?mac=${this.macAddress}`,
+			undefined,
+			undefined,
+			'GET',
 		)
 		this.state.info = res_info
 		//console.log('Display Info:', res_info)
 
 		const res_display = await this._defaultapirequest(
 			`/api/v1/devices/settings/display?mac=${this.macAddress}`,
-			undefined, 
-			undefined, 
-			'GET'
+			undefined,
+			undefined,
+			'GET',
 		)
 		this.state.display = res_display
 		//console.log('Display Status:', res_display)
@@ -174,11 +168,11 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 	}
 
 	async fetchDeviceSettings(): Promise<void> {
-		const res_settings= await this._defaultapirequest(
-			`/api/v1/devices/settings/config?mac=${this.macAddress}`, 
-			undefined, 
-			undefined, 
-			'GET'
+		const res_settings = await this._defaultapirequest(
+			`/api/v1/devices/settings/config?mac=${this.macAddress}`,
+			undefined,
+			undefined,
+			'GET',
 		)
 		this.settings.items = res_settings.items
 		this.settings.values = res_settings.values
@@ -192,15 +186,11 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 	startPolling(): void {
 		if (this.pollTimer) return
 
-		this.pollTimer = setInterval(async () => {
-			try {
-				await Promise.all([
-					this.fetchDeviceState(),
-				])
-			} catch (e) {
+		this.pollTimer = setInterval(() => {
+			void this.fetchDeviceState().catch(() => {
 				this.log('warn', 'Polling failed')
-			}
-		}, 2000) // alle 2 Sekunden
+			})
+		}, 2000)
 	}
 
 	// Login
@@ -222,7 +212,6 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 			agent: this._agent(),
 		}
 
-
 		this.log('debug', `Login to ${url}`)
 
 		try {
@@ -232,7 +221,7 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 			if (res.body) {
 				try {
 					data = JSON.parse(res.body)
-				} catch {
+				} catch (_e) {
 					// fallback: leave data as null
 				}
 			}
@@ -255,7 +244,11 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 
 			this.log('info', 'Login succeeded')
 			this.log('debug', 'Token is ' + data.access_token + ', expires in ' + expires + ' seconds')
-			try { this.updateStatus(InstanceStatus.Ok, 'Connected') } catch {}
+			try {
+				this.updateStatus(InstanceStatus.Ok, 'Connected')
+			} catch (_e) {
+				// ignored
+			}
 
 			// Token-Refresh planen
 			const refreshInMs = Math.max(10000, expires * 1000 - 30000)
@@ -266,15 +259,18 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 					this.log('error', `Token refresh failed: ${err.message || err}`)
 					try {
 						this.updateStatus(InstanceStatus.AuthenticationFailure, `Authentication failure: ${err.message || err}`)
-					} catch {}
+					} catch (_e) {
+						// ignored
+					}
 				})
 			}, refreshInMs)
-
 		} catch (err: any) {
 			this.log('error', `Login error: ${err.message || err}`)
 			try {
 				this.updateStatus(InstanceStatus.ConnectionFailure, `Connection failure: ${err.message || err}`)
-			} catch {}
+			} catch (_e) {
+				// ignored
+			}
 			throw err
 		}
 	}
@@ -295,9 +291,7 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 			return
 		}
 
-		this.macAddress = this.config.macadress
-			.replace(/:/g, '-')
-			.toLowerCase()
+		this.macAddress = this.config.macadress.replace(/:/g, '-').toLowerCase()
 
 		this.log('info', `Using MAC Address: ${this.macAddress}`)
 
@@ -337,14 +331,13 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 			disk_used: '-',
 		})
 
-
 		// Initial login
 		try {
 			this.log('info', 'Starting login')
 			await this.login().catch((err) => {
 				this.log('error', `Login failed: ${err.message || err}`)
 			})
-		} catch (e) {
+		} catch (_e) {
 			this.login().catch((err) => {
 				this.log('error', `Login failed: ${err.message || err}`)
 			})

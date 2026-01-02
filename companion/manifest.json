@@ -22,11 +22,5 @@
 	"legacyIds": [],
 	"manufacturer": "Samsung",
 	"products": ["TizenOS"],
-	"keywords": [
-		"Samsung",
-		"TizenOS",
-		"TV",
-		"Smart TV",
-		"Webservices API"
-	]
+	"keywords": ["Samsung", "TizenOS", "TV", "Smart TV", "Webservices API"]
 }

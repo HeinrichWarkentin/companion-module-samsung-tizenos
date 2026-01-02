@@ -30,10 +30,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 				const power = self.state?.device?.power
 				if (!power) return false
 
-				return (
-					String(power).toUpperCase() ===
-					String(feedback.options.state).toUpperCase()
-				)
+				return String(power).toUpperCase() === String(feedback.options.state).toUpperCase()
 			},
 		},
 
@@ -61,10 +58,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 				const power = self.state?.display?.display_conf?.basic?.panel_status
 				if (!power) return false
 
-				return (
-					String(power).toUpperCase() ===
-					String(feedback.options.state).toUpperCase()
-				)
+				return String(power).toUpperCase() === String(feedback.options.state).toUpperCase()
 			},
 		},
 
@@ -92,10 +86,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 				const mute = self.state?.display?.basic?.mute
 				if (!mute) return false
 
-				return (
-					String(mute).toUpperCase() ===
-					String(feedback.options.state).toUpperCase()
-				)
+				return String(mute).toUpperCase() === String(feedback.options.state).toUpperCase()
 			},
 		},
 
@@ -133,10 +124,7 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 				const source = self.state?.display?.basic?.source
 				if (!source) return false
 
-				return (
-					String(source).toUpperCase() ===
-					String(feedback.options.source).toUpperCase()
-				)
+				return String(source).toUpperCase() === String(feedback.options.source).toUpperCase()
 			},
 		},
 

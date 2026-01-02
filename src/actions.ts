@@ -3,9 +3,9 @@ import { CompanionActionEvent } from '@companion-module/base'
 import type { ModuleInstance } from './main.js'
 export function UpdateActions(self: ModuleInstance): void {
 	const sources = (self.settings?.values?.display_conf?.basic?.source || []).map((s: any) => ({
-        id: s,
-        label: s
-    }));
+		id: s,
+		label: s,
+	}))
 
 	self.setActionDefinitions({
 		Set_Power: {
@@ -24,26 +24,22 @@ export function UpdateActions(self: ModuleInstance): void {
 				},
 			],
 			callback: async (event: CompanionActionEvent) => {
-
-				let  desired = event.options.state
-				if (desired === "TOGGLE") {
+				let desired = event.options.state
+				if (desired === 'TOGGLE') {
 					if (self.state.device?.power === 'on') {
 						desired = 'OFF'
-					}else{
+					} else {
 						desired = 'ON'
 					}
 				}
 				const body = {
 					devices: [{ mac: self.macAddress }],
-					state: desired // "ON" oder "OFF"
+					state: desired, // "ON" oder "OFF"
 				}
 
 				try {
-					const res = await self._defaultapirequest("/api/v1/devices/power", body,undefined,'POST')
-					let data: any = null
-					if (res.body) {
-						try { data = JSON.parse(res.body) } catch {}
-					}
+					const res = await self._defaultapirequest('/api/v1/devices/power', body, undefined, 'POST')
+					const data: any = res
 
 					if (res.statusCode >= 400) {
 						const err: any = new Error(`Failed ${res.statusCode}`)
@@ -62,12 +58,10 @@ export function UpdateActions(self: ModuleInstance): void {
 					}
 
 					console.log(`Power ${desired} result:`, data.results)
-
 				} catch (err: any) {
 					self.log('error', `Set Power ${desired} error: ${err.message || err}`)
 					throw err
 				}
-					
 			},
 		},
 		Set_Pannel_Status: {
@@ -86,27 +80,22 @@ export function UpdateActions(self: ModuleInstance): void {
 				},
 			],
 			callback: async (event: CompanionActionEvent) => {
-
-				let  desired = event.options.state
-				if (desired === "TOGGLE") {
+				let desired = event.options.state
+				if (desired === 'TOGGLE') {
 					if (self.state.display?.display_conf?.basic?.panel_status === 'ON') {
 						desired = 'OFF'
-					}else{
+					} else {
 						desired = 'ON'
 					}
 				}
 				const body = {
 					devices: [{ mac: self.macAddress }],
-					settings: { display_conf: { basic: { panel_status: desired }}}
+					settings: { display_conf: { basic: { panel_status: desired } } },
 				}
 
-
 				try {
-					const res = await self._defaultapirequest("/api/v1/devices/settings/set",body,undefined,'POST')
-					let data: any = null
-					if (res.body) {
-						try { data = JSON.parse(res.body) } catch {}
-					}
+					const res = await self._defaultapirequest('/api/v1/devices/settings/set', body, undefined, 'POST')
+					const data: any = res
 
 					if (res.statusCode >= 400) {
 						const err: any = new Error(`Failed ${res.statusCode}`)
@@ -125,14 +114,11 @@ export function UpdateActions(self: ModuleInstance): void {
 					}
 
 					console.log(`Display Pannel ${desired} result:`, data.results)
-
 				} catch (err: any) {
 					self.log('error', `Set Display Pannel ${desired} error: ${err.message || err}`)
 					throw err
 				}
-					
 			},
-			
 		},
 		Set_Input_Source: {
 			name: 'Set Input Source',
@@ -142,23 +128,18 @@ export function UpdateActions(self: ModuleInstance): void {
 					type: 'dropdown',
 					label: 'Source',
 					choices: sources.length > 0 ? sources : [{ id: 'HDMI1', label: 'HDMI1' }],
-                    default: sources[0] || 'HDMI1'
+					default: sources[0] || 'HDMI1',
 				},
 			],
 			callback: async (event: CompanionActionEvent) => {
-
-
 				const body = {
 					devices: [{ mac: self.macAddress }],
-					settings: { display_conf: { basic: { source: event.options.source }}}
+					settings: { display_conf: { basic: { source: event.options.source } } },
 				}
 
 				try {
-					const res = await self._defaultapirequest("/api/v1/devices/settings/set",body,undefined,'POST')
-					let data: any = null
-					if (res.body) {
-						try { data = JSON.parse(res.body) } catch {}
-					}
+					const res = await self._defaultapirequest('/api/v1/devices/settings/set', body, undefined, 'POST')
+					const data: any = res
 
 					if (res.statusCode >= 400) {
 						const err: any = new Error(`Failed ${res.statusCode}`)
@@ -177,18 +158,15 @@ export function UpdateActions(self: ModuleInstance): void {
 					}
 
 					console.log(`Display Input Source ${event.options.source} result:`, data.results)
-
 				} catch (err: any) {
 					self.log('error', `Set Display Input Source ${event.options.source} error: ${err.message || err}`)
 					throw err
 				}
-					
 			},
-			
 		},
 		//TODO:
 		// Set_Volume
 		// Set_Mute
-		// 
+		//
 	})
 }

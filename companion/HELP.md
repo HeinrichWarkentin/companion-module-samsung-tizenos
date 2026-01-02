@@ -23,19 +23,16 @@ Set **Server Mode** to **"Server"**.
 After that, open the embedded web interface in a browser:
 https://\<IP-address\>:4000
 
-
 There you can set or change the administrator password.
 
 ### Module Configuration
 
 Open the Companion module configuration and configure the following fields:
 
-- **Target IP** — IP address or hostname of the Tizen web server  
-- **Target Port** — Web server port (default: `4000`)  
-- **Use HTTPS** — Enable if the device is configured to use HTTPS  
-- **Login ID** — Administrator username (default: `admin`)  
-- **Password** — Password for the administrator account  
+- **Target IP** — IP address or hostname of the Tizen web server
+- **Target Port** — Web server port (default: `4000`)
+- **Use HTTPS** — Enable if the device is configured to use HTTPS
+- **Login ID** — Administrator username (default: `admin`)
+- **Password** — Password for the administrator account
 - **MAC Address** — MAC address of the display  
-  *(used for actions and feedbacks; exactly one monitor is expected)*
-
-
+  _(used for actions and feedbacks; exactly one monitor is expected)_
