@@ -57,7 +57,7 @@ export function UpdateActions(self: ModuleInstance): void {
 				}
 			},
 		},
-		Set_Pannel_Status: {
+		Set_Panel_Status: {
 			name: 'Set Panel Status',
 			options: [
 				{
