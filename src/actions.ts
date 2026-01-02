@@ -124,7 +124,7 @@ export function UpdateActions(self: ModuleInstance): void {
 				}
 
 				try {
-					const res = await self._apiRequest('/api/v1/devices/settings/set', body,'POST')
+					const res = await self._apiRequest('/api/v1/devices/settings/set', body, 'POST')
 					const data: any = res
 
 					if (!data?.results || data.results.length === 0) {

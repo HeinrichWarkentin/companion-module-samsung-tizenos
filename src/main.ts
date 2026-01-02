@@ -13,7 +13,7 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 	config!: ModuleConfig // Setup in init()
 
 	private _token?: string
-	private  _refreshTimer?: NodeJS.Timeout
+	private _refreshTimer?: NodeJS.Timeout
 
 	public macAddress?: string
 
@@ -78,7 +78,7 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 	}
 
 	//Build base API URL from config
-	private  _getBaseUrl(): string {
+	private _getBaseUrl(): string {
 		const scheme = this.config.use_https ? 'https' : 'http'
 		const host = (this.config && this.config.host) || ''
 		const port = this.config && this.config.port ? `:${this.config.port}` : ''
@@ -87,7 +87,7 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 	}
 
 	// Return HTTPS agent for self-signed certificates
-	private  _getHttpsAgent(): { https: https.Agent } {
+	private _getHttpsAgent(): { https: https.Agent } {
 		return { https: new https.Agent({ rejectUnauthorized: false }) }
 	}
 
@@ -144,11 +144,7 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 		)
 		//console.log('Using Device:', this.state.device)
 
-		const res_info = await this._apiRequest(
-			`/api/v1/devices/settings/info?mac=${this.macAddress}`,
-			undefined,
-			'GET',
-		)
+		const res_info = await this._apiRequest(`/api/v1/devices/settings/info?mac=${this.macAddress}`, undefined, 'GET')
 		this.state.info = res_info
 		//console.log('Display Info:', res_info)
 
@@ -195,9 +191,9 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 		if (!password) throw new Error('Password not set in module config')
 
 		try {
-			const res = await this._apiRequest("/api/v1/auth/login", { id, password }, 'POST')
+			const res = await this._apiRequest('/api/v1/auth/login', { id, password }, 'POST')
 
-			let data: any = res
+			const data: any = res
 
 			if (!data?.access_token) {
 				throw new Error('Login did not return access_token')
@@ -264,7 +260,7 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 		this._updateVariableValues()
 
 		// Initial login
-		await this.login().catch(err => this.log('error', `Login failed: ${err.message || err}`))
+		await this.login().catch((err) => this.log('error', `Login failed: ${err.message || err}`))
 		await this.fetchDeviceSettings()
 		this.startPolling()
 	}
@@ -272,7 +268,7 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 	async destroy(): Promise<void> {
 		this.log('debug', 'destroy')
 		if (this.pollTimer) clearInterval(this.pollTimer)
-        if (this._refreshTimer) clearTimeout(this._refreshTimer)
+		if (this._refreshTimer) clearTimeout(this._refreshTimer)
 	}
 
 	async configUpdated(config: ModuleConfig): Promise<void> {

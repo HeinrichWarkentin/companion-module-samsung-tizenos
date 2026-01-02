@@ -51,7 +51,7 @@ export function UpdatePresets(self: ModuleInstance): void {
 				},
 			},
 		],
-	},
+	}
 	presets['toggle_display_panel'] = {
 		type: 'button',
 		category: 'default',
