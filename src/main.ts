@@ -12,9 +12,9 @@ import https from 'https' //https library
 export class ModuleInstance extends InstanceBase<ModuleConfig> {
 	config!: ModuleConfig // Setup in init()
 
-	public _samsung_token?: string
-	//private _samsung_token_expiry?: number
-	public _samsung_refresh_timer?: NodeJS.Timeout
+	private _token?: string
+	private  _refreshTimer?: NodeJS.Timeout
+
 	public macAddress?: string
 
 	public state: {
@@ -32,7 +32,9 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 		super(internal)
 	}
 
-	_updateVariableValues(): void {
+	private pollTimer?: NodeJS.Timeout
+
+	private _updateVariableValues(): void {
 		const device = this.state.device
 		const info = this.state.info
 		const display = this.state.display
@@ -75,28 +77,27 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 		})
 	}
 
-	//Default API Request
-	_baseUrl(): string {
-		const scheme = this.config && this.config.use_https === true ? 'https' : 'http'
+	//Build base API URL from config
+	private  _getBaseUrl(): string {
+		const scheme = this.config.use_https ? 'https' : 'http'
 		const host = (this.config && this.config.host) || ''
 		const port = this.config && this.config.port ? `:${this.config.port}` : ''
 		if (!host) return ''
 		return `${scheme}://${host}${port}`
 	}
 
-	_agent(): { https: https.Agent } {
-		// Self-signed Zertifikate zulassen
+	// Return HTTPS agent for self-signed certificates
+	private  _getHttpsAgent(): { https: https.Agent } {
 		return { https: new https.Agent({ rejectUnauthorized: false }) }
 	}
 
-	async _defaultapirequest(
+	async _apiRequest(
 		urlsuffix: string,
 		body?: Record<string, unknown>,
-		additionaloptions: any = {},
 		method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET',
 	): Promise<any> {
 		//URL zusammenbauen
-		const base = this._baseUrl()
+		const base = this._getBaseUrl()
 		if (!base) throw new Error('Host not configured')
 		const url = `${base}${urlsuffix}`
 
@@ -105,14 +106,12 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 			method,
 			timeout: { request: 7000 },
 			throwHttpErrors: false,
-			agent: this._agent(),
+			agent: this._getHttpsAgent(),
 			headers: {
-				Authorization: this._samsung_token, // nur Token
+				Authorization: this._token, // nur Token
 				Accept: 'application/json',
 			},
 			responseType: 'json',
-
-			...additionaloptions,
 		}
 
 		if (body && method !== 'GET') {
@@ -139,24 +138,22 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 	}
 	//Feedbacks and Variables
 	async fetchDeviceState(): Promise<void> {
-		const res_device = await this._defaultapirequest(`/api/v1/devices`, undefined, undefined, 'GET')
+		const res_device = await this._apiRequest(`/api/v1/devices`, undefined, 'GET')
 		this.state.device = res_device.devices?.find(
 			(d: any) => d.mac && d.mac.toLowerCase() === this.macAddress?.toLowerCase(),
 		)
 		//console.log('Using Device:', this.state.device)
 
-		const res_info = await this._defaultapirequest(
+		const res_info = await this._apiRequest(
 			`/api/v1/devices/settings/info?mac=${this.macAddress}`,
-			undefined,
 			undefined,
 			'GET',
 		)
 		this.state.info = res_info
 		//console.log('Display Info:', res_info)
 
-		const res_display = await this._defaultapirequest(
+		const res_display = await this._apiRequest(
 			`/api/v1/devices/settings/display?mac=${this.macAddress}`,
-			undefined,
 			undefined,
 			'GET',
 		)
@@ -168,21 +165,18 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 	}
 
 	async fetchDeviceSettings(): Promise<void> {
-		const res_settings = await this._defaultapirequest(
+		const res_settings = await this._apiRequest(
 			`/api/v1/devices/settings/config?mac=${this.macAddress}`,
-			undefined,
 			undefined,
 			'GET',
 		)
 		this.settings.items = res_settings.items
 		this.settings.values = res_settings.values
-		//console.log('Display Settings:', res_settings)
-
 		this.updateActions()
 	}
 
 	// Polling starten ?? - ist das best practice?
-	pollTimer?: NodeJS.Timeout
+
 	startPolling(): void {
 		if (this.pollTimer) return
 
@@ -199,48 +193,18 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 		const password = this.config?.password
 		if (!password) throw new Error('Password not set in module config')
 
-		const base = this._baseUrl()
-		if (!base) throw new Error('Host not configured')
-		const url = `${base}/api/v1/auth/login`
-
-		const options: any = {
-			method: 'POST',
-			json: { id, password },
-			timeout: { request: 7000 },
-			throwHttpErrors: false,
-			//https: { rejectUnauthorized: false }, // Self-signed Zertifikate erlauben
-			agent: this._agent(),
-		}
-
-		this.log('debug', `Login to ${url}`)
-
 		try {
-			const res = await got(url, options)
+			const res = await this._apiRequest("/api/v1/auth/login", { id, password }, 'POST')
 
-			let data: any = null
-			if (res.body) {
-				try {
-					data = JSON.parse(res.body)
-				} catch (_e) {
-					// fallback: leave data as null
-				}
-			}
-
-			if (res.statusCode >= 400) {
-				const err: any = new Error(`Login failed ${res.statusCode}`)
-				err.status = res.statusCode
-				err.data = data
-				throw err
-			}
+			let data: any = res
 
 			if (!data?.access_token) {
 				throw new Error('Login did not return access_token')
 			}
 
 			// Token speichern
-			this._samsung_token = data.access_token
+			this._token = data.access_token
 			const expires = data.expires_in ? Number(data.expires_in) : 86400
-			//this._samsung_token_expiry = Date.now() + expires * 1000
 
 			this.log('info', 'Login succeeded')
 			this.log('debug', 'Token is ' + data.access_token + ', expires in ' + expires + ' seconds')
@@ -252,8 +216,8 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 
 			// Token-Refresh planen
 			const refreshInMs = Math.max(10000, expires * 1000 - 30000)
-			if (this._samsung_refresh_timer) clearTimeout(this._samsung_refresh_timer)
-			this._samsung_refresh_timer = setTimeout(() => {
+			if (this._refreshTimer) clearTimeout(this._refreshTimer)
+			this._refreshTimer = setTimeout(() => {
 				this.log('debug', 'Refreshing token before expiry')
 				this.login().catch((err: any) => {
 					this.log('error', `Token refresh failed: ${err.message || err}`)
@@ -296,58 +260,18 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 		this.log('info', `Using MAC Address: ${this.macAddress}`)
 
 		// Initialize Variables
-		this.setVariableValues({
-			// Device / Power
-			power: 'UNKNOWN',
-			device_name: '-',
-			model: '-',
-			ip: '-',
-			mac: this.macAddress,
-			firmware: '-',
-			panel_status: '-',
-
-			// Source / Audio
-			source: '-',
-			volume: '-',
-			mute: '-',
-			sound_mode: '-',
-
-			// Picture
-			brightness: '-',
-			contrast: '-',
-			sharpness: '-',
-			color: '-',
-			tint: '-',
-			color_tone: '-',
-			color_temperature: '-',
-			picture_size: '-',
-
-			// Diagnosis
-			panel_on_time: '-',
-			temperature: '-',
-
-			// Storage / System
-			disk_free: '-',
-			disk_used: '-',
-		})
+		this._updateVariableValues()
 
 		// Initial login
-		try {
-			this.log('info', 'Starting login')
-			await this.login().catch((err) => {
-				this.log('error', `Login failed: ${err.message || err}`)
-			})
-		} catch (_e) {
-			this.login().catch((err) => {
-				this.log('error', `Login failed: ${err.message || err}`)
-			})
-		}
+		await this.login().catch(err => this.log('error', `Login failed: ${err.message || err}`))
 		await this.fetchDeviceSettings()
 		this.startPolling()
 	}
 	// When module gets deleted
 	async destroy(): Promise<void> {
 		this.log('debug', 'destroy')
+		if (this.pollTimer) clearInterval(this.pollTimer)
+        if (this._refreshTimer) clearTimeout(this._refreshTimer)
 	}
 
 	async configUpdated(config: ModuleConfig): Promise<void> {
