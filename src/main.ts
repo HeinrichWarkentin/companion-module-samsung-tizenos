@@ -181,8 +181,9 @@ export class ModuleInstance extends InstanceBase<ModuleConfig> {
 		if (this.pollTimer) return
 
 		this.pollTimer = setInterval(() => {
-			void this.fetchDeviceState().catch(() => {
-				this.log('warn', 'Polling failed')
+			void this.fetchDeviceState().catch((err) => {
+				//this.log('warn', 'Polling failed')
+				this.updateStatus(InstanceStatus.UnknownError, 'Polling failed:' + (err.message || err))
 			})
 		}, 2000)
 	}
